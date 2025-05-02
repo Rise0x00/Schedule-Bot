@@ -29,7 +29,7 @@ async def init_db(): # Инициализация базы данных
             corpus_id INTEGER DEFAULT 0)''')
         await db.commit()
 
-async def db_execute_select(query, fetchall=False): # Выполнение запроса и получение результата
+async def db_execute_select(query, fetchall=False): # Выполнение выборки из БД и получение результата
     # Используем блокировку для предотвращения конкурентного доступа к БД
     async with db_lock:
         async with aiosqlite.connect(DB_NAME) as db:
@@ -41,7 +41,7 @@ async def db_execute_select(query, fetchall=False): # Выполнение за�
     return result
 
 async def get_user_settings_text(user_id):
-    """Получает текущие настройки пользователя и возвращает форматированный текст"""
+    # Получает текущие настройки пользователя и возвращает форматированный текст
     user_data = await db_execute_select(f"SELECT group_id, corpus_id FROM Users WHERE user_id = {user_id}")
     if not user_data: return "Настройки не найдены"
     group_id, corpus_id = user_data
@@ -50,18 +50,18 @@ async def get_user_settings_text(user_id):
     corpus_text = f"Корпус: {corpus_id} ({corpus_name})" if corpus_id != 0 else "Корпус: не указан"
     return f"Ваши текущие настройки:\n{group_text}\n{corpus_text}"
 
-@bot.message_handler(commands=['start']) # Обработчик команды /start
+@bot.message_handler(commands=['start']) # Обработчик /start
 async def start_message(message):
     user_id = message.from_user.id
     if user_id not in authorized_users:
         await bot.send_message(user_id, "Извините, но у вас нет доступа к этому боту.")
         return
     
-    # Проверяем, существует ли пользователь в базе данных
+    # Проверяем, существует ли пользователь в БД
     user_data = await db_execute_select(f"SELECT group_id, corpus_id FROM Users WHERE user_id = {user_id}")
     
     if not user_data:
-        # Если пользователя нет в базе, добавляем его
+        # Если пользователя нет в БД, добавляем его
         async with db_lock:
             async with aiosqlite.connect(DB_NAME) as db:
                 await db.execute("INSERT INTO Users (user_id) VALUES (?)", (user_id,))
@@ -92,7 +92,7 @@ async def process_callback(call):
     elif call.data == 'change_corpus':  # Обработка запроса на изменение корпуса
         await bot.edit_message_text("Выберите свой корпус:", chat_id, call.message.id, reply_markup=kb.corpus_list())
 
-    elif call.data == 'changes_today':
+    elif call.data == 'changes_today': # Накостыленный костыль для изменения расписания на сегодня
         await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
         data = epsl.parse_data(402, "wednesday")
         string_rasp = f"<b>Изменения на cегодня для группы {group_number[0]}:</b>\n\n"
@@ -104,7 +104,7 @@ async def process_callback(call):
         await bot.edit_message_text(string_rasp, chat_id, call.message.id, reply_markup=kb.back_to_mm(), parse_mode='HTML')
 
     
-    elif call.data == 'rasp_call': 
+    elif call.data == 'rasp_call': # Накостыленный костыль для изменения расписания звонков
         file_ids = [
             "AgACAgIAAxkDAAIBmGgNTkSqmJVCxjOG6AiFhPaHsW_yAAJE7jEbRnloSF1OBBA5uExIAQADAgADeAADNgQ",
             "AgACAgIAAxkDAAIBmWgNTnGiZx_k6hIEjt_uZXLOy8gYAAJF7jEbRnloSOTqxfrBPg4YAQADAgADeAADNgQ"
@@ -116,7 +116,7 @@ async def process_callback(call):
         await bot.send_media_group(chat_id=call.message.chat.id, media=media)
         await bot.send_message(call.message.chat.id, "Расписание звонков", reply_markup=kb.back_to_mm())
         
-    elif call.data == 'changes_tomorrow':
+    elif call.data == 'changes_tomorrow': # Накостыленный костыль для изменения расписания на завтра
         await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
         data = epsl.parse_data(402, "wednesday")
         string_rasp = f"<b>Изменения на завтра для группы {group_number[0]}:</b>\n\n"
@@ -127,7 +127,7 @@ async def process_callback(call):
             string_rasp += data[1]
         await bot.edit_message_text(string_rasp, chat_id, call.message.id, reply_markup=kb.back_to_mm(), parse_mode='HTML')
 
-    elif call.data in ["mn", "tu", "wen", "th", "fr"]:
+    elif call.data in ["mn", "tu", "wen", "th", "fr"]: # Расписание на день недели
         await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
         week = {"mn": "monday", "tu": "tuesday", "wen": "wednesday", "th": "thursday", "fr": "friday"}
         week_rus = {"mn": "понедельник", "tu": "вторник", "wen": "среда", "th": "четверг", "fr": "пятница"}
@@ -147,7 +147,7 @@ async def process_callback(call):
 
     elif call.data.startswith('set_corpus_'):  # Обработка выбора корпуса
         corpus_number = int(call.data.split('_')[-1])
-        # Обновляем корпус в базе данных
+        # Обновляем корпус в БД
         async with db_lock:
             async with aiosqlite.connect(DB_NAME) as db:
                 await db.execute("UPDATE Users SET corpus_id = ? WHERE user_id = ?", (corpus_number, user_id))
@@ -169,7 +169,6 @@ async def process_callback(call):
         settings_text = await get_user_settings_text(user_id)
         await bot.edit_message_text(f"<b>Добро пожаловать!</b>\n\n{settings_text}\n\nВыберите действие:", chat_id, call.message.id, reply_markup=kb.main_menu(), parse_mode='HTML')
     elif call.data == 'back_to_setup':  # Обработка запроса на возврат в настройку профиля
-        # Сбрасываем состояние пользователя, если оно существует
         if user_id in user_states:
             del user_states[user_id]
         await bot.edit_message_text("Выберите действие:", chat_id, call.message.id, reply_markup=kb.setup_profile())
@@ -196,8 +195,6 @@ async def process_group_input(message):
     
     # Получаем обновленные данные пользователя
     settings_text = await get_user_settings_text(user_id)
-    
-    # Отправляем сообщение с обновленными данными
     await bot.send_message(
         user_id, 
         f"<b>Номер группы успешно обновлен!</b>\n\n{settings_text}\n\nВыберите действие:", 
@@ -206,7 +203,7 @@ async def process_group_input(message):
     )
 
 async def main():
-    # Запуск бесконечного опроса сервера Telegram
+    # Запуск бесконечного опроса сервера Telegram с задержкой в 30 секунд и пропусканием необработанных сообщений
     await bot.infinity_polling(timeout=30, skip_pending=True)
 
 async def startup():
