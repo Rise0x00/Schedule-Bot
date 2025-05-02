@@ -9,7 +9,7 @@ wednesday = (34, 47)
 thursday = (48, 61)
 friday = (62, 75)
 
-NAME = 'data_2.xlsx'
+NAME = 'Shabulina.xlsx'
 
 def find_cells(file_path, search_text, sheet_name='1 семестр'):
     wb = load_workbook(file_path)
@@ -36,7 +36,7 @@ def convert_address_to_indices(address):
     return (column_index, int(row_number))
 
 # Загрузить книгу
-wb = load_workbook('data_2.xlsx')
+wb = load_workbook('Shabulina.xlsx')
 sheet = wb['1 семестр']
 
 def read_range(sheet, start, end):
