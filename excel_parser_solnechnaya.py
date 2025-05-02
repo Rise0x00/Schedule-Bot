@@ -15,7 +15,6 @@ NAME = 'new_data.xlsx'
 df = pd.read_excel(OLD_NAME, engine='xlrd')
 df.to_excel(NAME, index=False)  # Сохраняем в современном формате
 
-
 def find_cells(file_path, search_text, sheet_name='Sheet1'):
     wb = load_workbook(file_path)
     sheet = wb[sheet_name]
