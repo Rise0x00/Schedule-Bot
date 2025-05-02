@@ -9,8 +9,8 @@ wednesday = (40, 53)
 thursday = (55, 68)
 friday = (70, 83)
 
-OLD_NAME = 'data.xls'
-NAME = 'new_data.xlsx'
+OLD_NAME = 'Solnechnya.xls'
+NAME = 'ns.xlsx'
 
 df = pd.read_excel(OLD_NAME, engine='xlrd')
 df.to_excel(NAME, index=False)  # Сохраняем в современном формате
@@ -40,7 +40,7 @@ def convert_address_to_indices(address):
     return (column_index, int(row_number))
 
 # Загрузить книгу
-wb = load_workbook('new_data.xlsx')
+wb = load_workbook('ns.xlsx')
 sheet = wb['Sheet1']
 
 def read_range(sheet, start, end):
