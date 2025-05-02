@@ -186,7 +186,7 @@ async def process_group_input(message):
     
     find1 = epsl.find_cells(f"new_data.xlsx", group_number)
     find2 = epsh.find_cells(f"data_2.xlsx", group_number)
-    print(find1, "\n\n", find2)
+
     if (find1 == []) and (find2 == []):
         await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
         return
