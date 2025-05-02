@@ -53,8 +53,8 @@ async def get_user_settings_text(user_id):
     corpus_text = f"Корпус: {corpus_id} ({corpus_name})" if corpus_id != 0 else "Корпус: не указан"
     return f"Ваши текущие настройки:\n{group_text}\n{corpus_text}"
 
-@bot.message_handler(commands=['feedback']) # Обработчик /fadback
-async def start_message(message):
+@bot.message_handler(commands=['feedback']) # Обработчик /feedback
+async def feedback_message(message):
     global user_states
     user_id = message.from_user.id
     await bot.send_message(user_id, "Опишите вашу проблему")
@@ -186,6 +186,12 @@ async def process_feedback(message):
     user_id = message.from_user.id
     for i in admins:
         await bot.send_message(i, f'Получена обратная связь от пользователя <b>{user_id}</b>:\n\n{message.text}', parse_mode='HTML')
+    settings_text = await get_user_settings_text(user_id)
+
+    await bot.send_message(user_id,
+        f"<b>Сообщение отправлено!</b>\n\n{settings_text}\n\nВыберите действие:", 
+        reply_markup=kb.main_menu(),
+        parse_mode='HTML')
     if user_id in user_states:
         del user_states[user_id]
 
