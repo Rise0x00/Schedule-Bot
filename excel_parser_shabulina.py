@@ -36,8 +36,8 @@ def convert_address_to_indices(address):
     return (column_index, int(row_number))
 
 # Загрузить книгу
-wb = load_workbook('new_data.xlsx')
-sheet = wb['Sheet1']
+wb = load_workbook('data_2.xlsx')
+sheet = wb['1 семестр']
 
 def read_range(sheet, start, end):
     values = []
