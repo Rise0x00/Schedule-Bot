@@ -8,6 +8,7 @@ import excel_parser_solnechnaya as epsl
 import excel_parser_shabulina as epsh
 
 BOT_API_TOKEN = '7882275526:AAHkP5YZyt-RjXe8qVPqoCl3i3CFO3TaNVU'
+admins = [1611784096, 1996378796, 6379037676]
 authorized_users = [1611784096, 1996378796, 6379037676]
 DB_NAME = "Database.db" # Имя базы данных
 db_lock = asyncio.Lock() # Блокировка для работы с базой данных
@@ -18,6 +19,7 @@ bot = AsyncTeleBot(BOT_API_TOKEN) # Инициализация бота
 user_states = {}
 # Константы состояний
 STATE_WAITING_FOR_GROUP = "waiting_for_group"
+STATE_WAITING_FEEDBACK = "waiting_for_feedback"
 
 async def init_db(): # Инициализация базы данных
     async with aiosqlite.connect(DB_NAME) as db:
@@ -49,6 +51,14 @@ async def get_user_settings_text(user_id):
     corpus_name = "Солнечная" if corpus_id == 1 else "Шабулина" if corpus_id == 2 else ""
     corpus_text = f"Корпус: {corpus_id} ({corpus_name})" if corpus_id != 0 else "Корпус: не указан"
     return f"Ваши текущие настройки:\n{group_text}\n{corpus_text}"
+
+
+@bot.message_handler(commands=['feedback']) # Обработчик /fadback
+async def start_message(message):
+    global user_states
+    user_id = message.from_user.id
+    await bot.send_message(user_id, "Опишите вашу проблему")
+    user_states[user_id] = STATE_WAITING_FEEDBACK
 
 @bot.message_handler(commands=['start']) # Обработчик /start
 async def start_message(message):
@@ -172,6 +182,18 @@ async def process_callback(call):
         if user_id in user_states:
             del user_states[user_id]
         await bot.edit_message_text("Выберите действие:", chat_id, call.message.id, reply_markup=kb.setup_profile())
+
+
+# Обработчик текстовых сообщений для обратной связи
+@bot.message_handler(func=lambda message: message.from_user.id in user_states and user_states[message.from_user.id] == STATE_WAITING_FEEDBACK)
+async def process_feedback(message):
+    global user_states
+    user_id = message.from_user.id
+    for i in admins:
+        await bot.send_message(i, f'Получен feedback от пользователя {user_id}:\n\n{message.text}')
+    if user_id in user_states:
+        del user_states[user_id]
+
 
 # Обработчик текстовых сообщений для ввода группы
 @bot.message_handler(func=lambda message: message.from_user.id in user_states and user_states[message.from_user.id] == STATE_WAITING_FOR_GROUP)
