@@ -187,7 +187,7 @@ async def process_feedback(message):
     for i in admins:
         await bot.send_message(i, f'Получена обратная связь от пользователя <b>{user_id}</b>:\n\n{message.text}', parse_mode='HTML')
     settings_text = await get_user_settings_text(user_id)
-    # Отправляем сообщение с обновленными данными
+
     await bot.send_message(user_id,
         f"<b>Сообщение отправлено!</b>\n\n{settings_text}\n\nВыберите действие:", 
         reply_markup=kb.main_menu(),
