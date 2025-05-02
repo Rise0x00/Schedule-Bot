@@ -21,7 +21,7 @@ STATE_WAITING_FOR_GROUP = "waiting_for_group"
 
 async def init_db(): # Инициализация базы данных
     async with aiosqlite.connect(DB_NAME) as db:
-        # Создаем таблицу Users, если она не существуе
+        # Создаем таблицу Users, если она не существу
         await db.execute('''
         CREATE TABLE IF NOT EXISTS Users (
             user_id INTEGER PRIMARY KEY,
