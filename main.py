@@ -7,7 +7,7 @@ import aiosqlite
 import excel_parser_solnechnaya as epsl
 import excel_parser_shabulina as epsh
 
-BOT_API_TOKEN = '7882275526:AAHkP5YZyt-RjXe8qVPqoCl3i3CFO3TaNVU'
+BOT_API_TOKEN = '7882275526:AAHkP5YZytRjXe8qVPqoCl3i3CFO3TaNVU'
 authorized_users = [1611784096, 1996378796, 6379037676]
 DB_NAME = "Database.db" # Имя базы данных
 db_lock = asyncio.Lock() # Блокировка для работы с базой данных
