@@ -10,14 +10,15 @@ import excel_parser_shabulina as epsh
 BOT_API_TOKEN = '7882275526:AAHkP5YZyt-RjXe8qVPqoCl3i3CFO3TaNVU'
 admins = [1611784096, 1996378796, 6379037676]
 authorized_users = [1611784096, 1996378796, 6379037676]
-DB_NAME = "Database.db" # Имя базы данных
-db_lock = asyncio.Lock() # Блокировка для работы с базой данных
 
+DB_NAME = "Database.db" # Имя базы данных
+
+db_lock = asyncio.Lock() # Блокировка для работы с базой данных
 bot = AsyncTeleBot(BOT_API_TOKEN) # Инициализация бота
 
-# Словарь для хранения состояний пользователей
+# Словарь для хранения состояний пользователей и константы состояний
 user_states = {}
-# Константы состояний
+
 STATE_WAITING_FOR_GROUP = "waiting_for_group"
 STATE_WAITING_FEEDBACK = "waiting_for_feedback"
 
@@ -36,7 +37,7 @@ async def db_execute_select(query, fetchall=False): # Выполнение вы�
     async with db_lock:
         async with aiosqlite.connect(DB_NAME) as db:
             cursor = await db.execute(query)
-            if fetchall == True:
+            if fetchall:
                 result = await cursor.fetchall()
             else:
                 result = await cursor.fetchone()
@@ -51,7 +52,6 @@ async def get_user_settings_text(user_id):
     corpus_name = "Солнечная" if corpus_id == 1 else "Шабулина" if corpus_id == 2 else ""
     corpus_text = f"Корпус: {corpus_id} ({corpus_name})" if corpus_id != 0 else "Корпус: не указан"
     return f"Ваши текущие настройки:\n{group_text}\n{corpus_text}"
-
 
 @bot.message_handler(commands=['feedback']) # Обработчик /fadback
 async def start_message(message):
@@ -70,8 +70,7 @@ async def start_message(message):
     # Проверяем, существует ли пользователь в БД
     user_data = await db_execute_select(f"SELECT group_id, corpus_id FROM Users WHERE user_id = {user_id}")
     
-    if not user_data:
-        # Если пользователя нет в БД, добавляем его
+    if not user_data: # Если пользователя нет в БД, добавляем его
         async with db_lock:
             async with aiosqlite.connect(DB_NAME) as db:
                 await db.execute("INSERT INTO Users (user_id) VALUES (?)", (user_id,))
@@ -82,8 +81,7 @@ async def start_message(message):
         user_id, 
         f"<b>Добро пожаловать!</b>\n\n{settings_text}\n\nВыберите действие:", 
         reply_markup=kb.main_menu(),
-        parse_mode='HTML'
-    )
+        parse_mode='HTML')
 
 @bot.callback_query_handler(func=lambda call: True) # Обработчик всех callback-запросов
 async def process_callback(call):
@@ -92,6 +90,7 @@ async def process_callback(call):
     # Проверяем тип callback и выполняем соответствующие действия
     if call.data == 'setup_profile':  # Обработка запроса на настройку профиля
         await bot.edit_message_text("Выберите действие:", chat_id, call.message.id, reply_markup=kb.setup_profile())
+
     elif call.data == 'change_group':  # Обработка запроса на изменение группы
         # Устанавливаем состояние ожидания ввода группы
         user_states[user_id] = STATE_WAITING_FOR_GROUP
@@ -107,7 +106,6 @@ async def process_callback(call):
             ]
         try: await bot.delete_message(call.message.chat.id, call.message.id)
         except: pass
-
         media = [InputMediaPhoto(media=file_id, caption=f"Фото {i+1}") for i, file_id in enumerate(file_ids)]
         await bot.send_media_group(chat_id=call.message.chat.id, media=media)
         await bot.send_message(call.message.chat.id, "Расписание звонков", reply_markup=kb.back_to_mm())
@@ -161,9 +159,7 @@ async def process_callback(call):
             async with aiosqlite.connect(DB_NAME) as db:
                 await db.execute("UPDATE Users SET corpus_id = ? WHERE user_id = ?", (corpus_number, user_id))
                 await db.commit()
-        
         settings_text = await get_user_settings_text(user_id)
-        
         # Отправляем сообщение с обновленными данными
         await bot.edit_message_text(
             f"<b>Корпус успешно обновлен!</b>\n\n{settings_text}\n\nВыберите действие:", 
@@ -183,17 +179,15 @@ async def process_callback(call):
             del user_states[user_id]
         await bot.edit_message_text("Выберите действие:", chat_id, call.message.id, reply_markup=kb.setup_profile())
 
-
 # Обработчик текстовых сообщений для обратной связи
 @bot.message_handler(func=lambda message: message.from_user.id in user_states and user_states[message.from_user.id] == STATE_WAITING_FEEDBACK)
 async def process_feedback(message):
     global user_states
     user_id = message.from_user.id
     for i in admins:
-        await bot.send_message(i, f'Получен feedback от пользователя {user_id}:\n\n{message.text}')
+        await bot.send_message(i, f'Получена обратная связь от пользователя <b>{user_id}</b>:\n\n{message.text}', parse_mode='HTML')
     if user_id in user_states:
         del user_states[user_id]
-
 
 # Обработчик текстовых сообщений для ввода группы
 @bot.message_handler(func=lambda message: message.from_user.id in user_states and user_states[message.from_user.id] == STATE_WAITING_FOR_GROUP)
@@ -203,14 +197,14 @@ async def process_group_input(message):
 
     # Проверяем, что введено число
     if not group_number.isdigit():
-        await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
+        await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры):")
         return
     
     find1 = epsl.find_cells(f"new_data.xlsx", group_number)
     find2 = epsh.find_cells(f"data_2.xlsx", group_number)
 
     if (find1 == []) and (find2 == []):
-        await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
+        await bot.send_message(user_id, "Пожалуйста, введите номер существующей группы (только цифры):")
         return
     
     # Сбрасываем состояние пользователя
@@ -231,14 +225,12 @@ async def process_group_input(message):
         parse_mode='HTML')
 
 async def main():
-    # Запуск бесконечного опроса сервера Telegram с задержкой в 30 секунд и пропусканием необработанных сообщений
+    # Запуск бесконечного опроса сервера Telegram
     await bot.infinity_polling(timeout=30, skip_pending=True)
 
 async def startup():
-    # Инициализация базы данных перед запуском бота
-    await init_db()
-    await main()
+    await init_db() # Инициализация БД перед запуском бота
+    await main() # Запуск бота
 
 if __name__ == '__main__':
-    # Точка входа в программу
-    asyncio.run(startup())
+    asyncio.run(startup()) # Точка входа в программу
