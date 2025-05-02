@@ -1,0 +1,6 @@
+aiosqlite
+aiohttp
+pyTelegramBotAPI
+pandas
+openpyxl
+xlrd
