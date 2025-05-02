@@ -21,7 +21,7 @@ STATE_WAITING_FOR_GROUP = "waiting_for_group"
 
 async def init_db(): # Инициализация базы данных
     async with aiosqlite.connect(DB_NAME) as db:
-        # Создаем таблицу Users, если она не существу
+        # Создаем таблицу Users, если она не существует
         await db.execute('''
         CREATE TABLE IF NOT EXISTS Users (
             user_id INTEGER PRIMARY KEY,
@@ -158,8 +158,8 @@ async def process_callback(call):
         await bot.edit_message_text(
             f"<b>Корпус успешно обновлен!</b>\n\n{settings_text}\n\nВыберите действие:", 
             chat_id, call.message.id, reply_markup=kb.main_menu(),
-            parse_mode='HTML'
-        )
+            parse_mode='HTML')
+        
     elif call.data == 'back_to_main':  # Обработка запроса на возврат в главное меню
         # Сбрасываем состояние пользователя, если оно существует
         if user_id in user_states:
@@ -167,6 +167,7 @@ async def process_callback(call):
         # Получаем данные пользователя из базы
         settings_text = await get_user_settings_text(user_id)
         await bot.edit_message_text(f"<b>Добро пожаловать!</b>\n\n{settings_text}\n\nВыберите действие:", chat_id, call.message.id, reply_markup=kb.main_menu(), parse_mode='HTML')
+    
     elif call.data == 'back_to_setup':  # Обработка запроса на возврат в настройку профиля
         if user_id in user_states:
             del user_states[user_id]
@@ -177,15 +178,21 @@ async def process_callback(call):
 async def process_group_input(message):
     user_id = message.from_user.id
     group_number = message.text.strip()
-    
-    # Сбрасываем состояние пользователя
-    del user_states[user_id]
 
     # Проверяем, что введено число
     if not group_number.isdigit():
         await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
         return
     
+    find1 = epsl.find_cells(f"data_1.xlsx", group_number)
+    find2 = epsh.find_cells(f"data_2.xlsx", group_number)
+    if (find1 == False) and (find2 == False):
+        await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
+        return
+    
+    # Сбрасываем состояние пользователя
+    del user_states[user_id]
+
     # Обновляем группу в базе данных
     async with db_lock:
         async with aiosqlite.connect(DB_NAME) as db:
@@ -198,8 +205,7 @@ async def process_group_input(message):
         user_id, 
         f"<b>Номер группы успешно обновлен!</b>\n\n{settings_text}\n\nВыберите действие:", 
         reply_markup=kb.main_menu(),
-        parse_mode='HTML'
-    )
+        parse_mode='HTML')
 
 async def main():
     # Запуск бесконечного опроса сервера Telegram с задержкой в 30 секунд и пропусканием необработанных сообщений
