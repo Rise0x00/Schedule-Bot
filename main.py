@@ -113,7 +113,11 @@ async def process_callback(call):
     elif call.data == 'changes_today': # Накостыленный костыль для изменения расписания на сегодня
         await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
         group_number = await db_execute_select(f"SELECT group_id FROM Users WHERE user_id = {user_id}")
-        data = epsl.parse_data(group_number[0], "wednesday")
+        corpus_id = await db_execute_select(f"SELECT corpus_id FROM Users WHERE user_id = {user_id}")
+        if corpus_id[0] == 1:
+            data = epsl.parse_data(group_number[0], "monday")
+        elif corpus_id[0] == 2:
+            data = epsh.parse_data(group_number[0], "monday")
         string_rasp = f"<b>Изменения на cегодня для группы {group_number[0]}:</b>\n\n"
         if data[0] != False:
             for row in data[1]:
@@ -125,7 +129,11 @@ async def process_callback(call):
     elif call.data == 'changes_tomorrow': # Накостыленный костыль для изменения расписания на завтра
         await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm())
         group_number = await db_execute_select(f"SELECT group_id FROM Users WHERE user_id = {user_id}")
-        data = epsl.parse_data(group_number[0], "wednesday")
+        corpus_id = await db_execute_select(f"SELECT corpus_id FROM Users WHERE user_id = {user_id}")
+        if corpus_id[0] == 1:
+            data = epsl.parse_data(group_number[0], "monday")
+        elif corpus_id[0] == 2:
+            data = epsh.parse_data(group_number[0], "monday")
         string_rasp = f"<b>Изменения на завтра для группы {group_number[0]}:</b>\n\n"
         if data[0] != False:
             for row in data[1]:
