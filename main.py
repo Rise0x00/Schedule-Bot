@@ -79,9 +79,7 @@ async def start_message(message):
 async def process_callback(call):
     chat_id = call.message.chat.id
     user_id = call.from_user.id
-    
     # Проверяем тип callback и выполняем соответствующие действия
-
     if call.data == 'setup_profile':  # Обработка запроса на настройку профиля
         await bot.edit_message_text("Выберите действие:", chat_id, call.message.id, reply_markup=kb.setup_profile())
     elif call.data == 'change_group':  # Обработка запроса на изменение группы
@@ -91,18 +89,6 @@ async def process_callback(call):
 
     elif call.data == 'change_corpus':  # Обработка запроса на изменение корпуса
         await bot.edit_message_text("Выберите свой корпус:", chat_id, call.message.id, reply_markup=kb.corpus_list())
-
-    elif call.data == 'changes_today': # Накостыленный костыль для изменения расписания на сегодня
-        await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
-        data = epsl.parse_data(402, "wednesday")
-        string_rasp = f"<b>Изменения на cегодня для группы {group_number[0]}:</b>\n\n"
-        if data[0] != False:
-            for row in data[1]:
-                string_rasp += f"{row[0]}\n\n "
-        else:
-            string_rasp += data[1]
-        await bot.edit_message_text(string_rasp, chat_id, call.message.id, reply_markup=kb.back_to_mm(), parse_mode='HTML')
-
     
     elif call.data == 'rasp_call': # Накостыленный костыль для изменения расписания звонков
         file_ids = [
@@ -115,10 +101,23 @@ async def process_callback(call):
         media = [InputMediaPhoto(media=file_id, caption=f"Фото {i+1}") for i, file_id in enumerate(file_ids)]
         await bot.send_media_group(chat_id=call.message.chat.id, media=media)
         await bot.send_message(call.message.chat.id, "Расписание звонков", reply_markup=kb.back_to_mm())
+
+    elif call.data == 'changes_today': # Накостыленный костыль для изменения расписания на сегодня
+        await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
+        group_number = await db_execute_select(f"SELECT group_id FROM Users WHERE user_id = {user_id}")
+        data = epsl.parse_data(group_number[0], "wednesday")
+        string_rasp = f"<b>Изменения на cегодня для группы {group_number[0]}:</b>\n\n"
+        if data[0] != False:
+            for row in data[1]:
+                string_rasp += f"{row[0]}\n\n "
+        else:
+            string_rasp += data[1]
+        await bot.edit_message_text(string_rasp, chat_id, call.message.id, reply_markup=kb.back_to_mm(), parse_mode='HTML')
         
     elif call.data == 'changes_tomorrow': # Накостыленный костыль для изменения расписания на завтра
-        await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm()) 
-        data = epsl.parse_data(402, "wednesday")
+        await bot.edit_message_text("Пожалуйста, подождите...", chat_id, call.message.id, reply_markup=kb.back_to_mm())
+        group_number = await db_execute_select(f"SELECT group_id FROM Users WHERE user_id = {user_id}")
+        data = epsl.parse_data(group_number[0], "wednesday")
         string_rasp = f"<b>Изменения на завтра для группы {group_number[0]}:</b>\n\n"
         if data[0] != False:
             for row in data[1]:
