@@ -184,7 +184,7 @@ async def process_group_input(message):
         await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
         return
     
-    find1 = epsl.find_cells(f"data_1.xlsx", group_number)
+    find1 = epsl.find_cells(f"new_data.xlsx", group_number)
     find2 = epsh.find_cells(f"data_2.xlsx", group_number)
     if (find1 == False) and (find2 == False):
         await bot.send_message(user_id, "Пожалуйста, введите корректный номер группы (только цифры).")
