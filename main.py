@@ -7,7 +7,7 @@ import aiosqlite
 import excel_parser_solnechnaya as epsl
 import excel_parser_shabulina as epsh
 
-BOT_API_TOKEN = '7882275526:AAHkP5YZyt-RjXe8qVPqoCl3i3CFO3TaNVU'
+BOT_API_TOKEN = '7537071123:AAHkzHQGiznF3uAGzAvALnaJfsxOOXfV8ic'
 admins = [1611784096, 1996378796, 6379037676]
 authorized_users = [1611784096, 1996378796, 6379037676]
 
@@ -131,9 +131,9 @@ async def process_callback(call):
         group_number = await db_execute_select(f"SELECT group_id FROM Users WHERE user_id = {user_id}")
         corpus_id = await db_execute_select(f"SELECT corpus_id FROM Users WHERE user_id = {user_id}")
         if corpus_id[0] == 1:
-            data = epsl.parse_data(group_number[0], "monday")
+            data = epsl.parse_data(group_number[0], "friday")
         elif corpus_id[0] == 2:
-            data = epsh.parse_data(group_number[0], "monday")
+            data = epsh.parse_data(group_number[0], "friday")
         string_rasp = f"<b>Изменения на завтра для группы {group_number[0]}:</b>\n\n"
         if data[0] != False:
             for row in data[1]:
