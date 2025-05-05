@@ -2,7 +2,7 @@ import asyncio
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 from telebot.types import InputMediaPhoto
-import keyboards as kb
+import keyboards as kb 
 import aiosqlite
 import excel_parser_solnechnaya as epsl
 import excel_parser_shabulina as epsh
@@ -101,8 +101,8 @@ async def process_callback(call):
     
     elif call.data == 'rasp_call': # Накостыленный костыль для изменения расписания звонков
         file_ids = [
-            "AgACAgIAAxkDAAIBmGgNTkSqmJVCxjOG6AiFhPaHsW_yAAJE7jEbRnloSF1OBBA5uExIAQADAgADeAADNgQ",
-            "AgACAgIAAxkDAAIBmWgNTnGiZx_k6hIEjt_uZXLOy8gYAAJF7jEbRnloSOTqxfrBPg4YAQADAgADeAADNgQ"
+            "AgACAgIAAxkDAAMUaBk10pUdgOZcVBZGNbMaRfnwdWEAAr74MRvOc8lI2QoI9I2R0v0BAAMCAAN4AAM2BA",
+            "AgACAgIAAxkDAAMVaBk10lzZ30Kqj-Hgi9v9l5OGCL4AAr_4MRvOc8lI5JVLFNjrO3oBAAMCAAN4AAM2BA"
             ]
         try: await bot.delete_message(call.message.chat.id, call.message.id)
         except: pass
